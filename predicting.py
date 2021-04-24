@@ -7,7 +7,8 @@ from joblib import dump, load
 from preprocessing import file_to_features
 
 
-def process_file(binary_file, model):
+def process_file(binary_file):
+    model = load('models/xgboost1.joblib')
     features, ids = file_to_features(binary_file)
     labels = model.predict(features)
     answers = {}
@@ -18,9 +19,8 @@ def process_file(binary_file, model):
 
 if __name__ == '__main__':
     #Load model
-    best_xgboost = load('models/xgboost1.joblib')
     with open('data/BadTracksHackaton1801.txt', 'rb') as file:
         binary_file = file.read()
-    print(process_file(binary_file, best_xgboost))
+    print(process_file(binary_file))
     
     
