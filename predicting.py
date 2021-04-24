@@ -13,7 +13,7 @@ def process_file(binary_file):
     labels = model.predict(features)
     answers = {}
     for i in range(ids.shape[0]):
-        answers[ids[i]] = labels[i]
+        answers[str(ids[i])] = int(labels[i])
     return answers
 
 

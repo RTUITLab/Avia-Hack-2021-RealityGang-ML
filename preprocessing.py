@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Pool
 import time
 from io import BytesIO
+import base64
 
 
 def time_to_seconds(time: str) -> int:
@@ -75,7 +76,7 @@ def get_features(grouped_df):
 
 
 def file_to_features(binary_file):
-    data = pd.read_csv(BytesIO(binary_file), sep=' ', header=None, names=['time', 'id', 'latitude', 'longitude', 'elevation', 'code', 'name'])
+    data = pd.read_csv(BytesIO(base64.b64decode(binary_file)), sep=' ', header=None, names=['time', 'id', 'latitude', 'longitude', 'elevation', 'code', 'name'])
     data['time'] = data['time'].apply(time_to_seconds)
     grouped = data.groupby('id')
     grouped_df = [i for i in grouped]

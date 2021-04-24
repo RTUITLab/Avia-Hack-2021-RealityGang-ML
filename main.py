@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File
+from fastapi import FastAPI
 from pydantic import BaseModel
 from predicting import process_file
 
@@ -15,6 +15,6 @@ app = FastAPI()
 
 
 @app.post('/predict', response_model=Predictions)
-async def make_prediction(file: bytes=UpFile):
+async def make_prediction(file: UpFile):
     answers = process_file(file.file)
     return Predictions(answers=answers)
