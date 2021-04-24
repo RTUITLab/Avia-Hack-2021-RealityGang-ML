@@ -127,3 +127,6 @@ dmypy.json
 
 /data
 .idea
+/test
+/processed
+.ipynb
