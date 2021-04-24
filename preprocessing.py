@@ -82,22 +82,4 @@ def file_to_features(binary_file):
     grouped_df = [i for i in grouped]
     tmp = get_features(grouped_df)
     features = np.array(tmp)
-    return (features, data['id'].unique())
-
-
-if __name__ == '__main__':
-    for file in listdir('data'):
-        if isfile(join('data', file)):
-            path = join('data', file)
-            data = pd.read_csv(path, sep=' ', header=None, names=['time', 'id', 'latitude', 'longitude', 'elevation', 'code', 'name'])
-            data['time'] = data['time'].apply(time_to_seconds)
-            grouped = data.groupby('id')
-            grouped_df = [i for i in grouped]
-            t = time.time()
-            tmp = get_features(grouped_df)
-            print(time.time() - t)
-            arr = np.array(tmp)
-            with open(join('processed', file), 'wb') as f:
-                np.save(f, arr)
-    #print(grouped_df)
-    
+    return (features, list(grouped.groups.keys()))

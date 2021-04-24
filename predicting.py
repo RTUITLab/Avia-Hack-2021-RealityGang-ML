@@ -1,4 +1,5 @@
 import numpy as np
+import base64
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
 from sklearn.metrics import accuracy_score
 from sklearn.tree import DecisionTreeClassifier
@@ -12,15 +13,25 @@ def process_file(binary_file):
     features, ids = file_to_features(binary_file)
     labels = model.predict(features)
     answers = {}
-    for i in range(ids.shape[0]):
+    for i in range(len(ids)):
         answers[str(ids[i])] = int(labels[i])
     return answers
 
+def str_to_base64(str_file):
+    return base64.b64encode(str_file.encode('utf-8'))
 
-if __name__ == '__main__':
-    #Load model
-    with open('data/BadTracksHackaton1801.txt', 'rb') as file:
-        binary_file = file.read()
-    print(process_file(binary_file))
+def make_files(base64_str, answers):
+    str_file = base64.b64decode(base64_str).decode('utf-8')
+    correct = ''
+    incorrect = ''
+    for line in str_file.split('\n'):
+        track_id = line.split(" ")[1][1:-1]
+        if answers[track_id] == 0:
+            correct += line+'\n'
+        else:
+            incorrect += line+'\n'
+
+    correct = correct.strip()
+    incorrect = incorrect.strip()
     
-    
+    return (str_to_base64(correct), str_to_base64(incorrect))
