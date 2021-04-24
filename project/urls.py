@@ -18,5 +18,5 @@ import main_app.views as views
 
 urlpatterns = [
     # Произвести анализ данных
-    path('api/predict', views.GetMessagesView.as_view()),
+    path('api/predict', views.MakePredictionView.as_view()),
 ]

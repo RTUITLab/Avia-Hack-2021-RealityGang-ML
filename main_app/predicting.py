@@ -1,10 +1,17 @@
 import base64
 from joblib import dump, load
 from .preprocessing import file_to_features
+import numpy as np
+import base64
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
+from sklearn.metrics import accuracy_score
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from joblib import dump, load
 
 
 def process_file(binary_file):
-    model = load('models/xgboost1.joblib')
+    model = load('main_app/models/xgboost1.joblib')
     features, ids = file_to_features(binary_file)
     labels = model.predict(features)
     answers = {}
