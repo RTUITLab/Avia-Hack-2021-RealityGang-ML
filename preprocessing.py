@@ -6,10 +6,13 @@ import math
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Pool
 import time
+from io import BytesIO
+
 
 def time_to_seconds(time: str) -> int:
     h, m, s = map(int, time.split(':'))
     return s + m*60 + h*3600
+
 
 def calc_angle(x1, y1, x2, y2, x3, y3):
     v1 = ((x2-x1), (y2-y1))
@@ -18,8 +21,10 @@ def calc_angle(x1, y1, x2, y2, x3, y3):
     cos = (v1[0]*v2[0] + v1[1]*v2[1]) / ((sqrt1 + 0.01) * (sqrt2 + 0.01))
     return (cos + 1) / 2
 
+
 def calc_distance(x1, y1, x2, y2):
     return math.sqrt((x2-x1)**2 + (y2-y1)**2)
+
 
 def kernel(tupl):
     _, track_data = tupl
@@ -60,12 +65,24 @@ def kernel(tupl):
     avg_z_speed /= track_data.shape[0]
     return [min_angle, max_xy_speed, avg_xy_speed, max_z_speed, avg_z_speed, max_time_diff, avg_time_diff]
 
+
 def get_features(grouped_df):
     pool = Pool(16)
     DATA = pool.map(kernel, grouped_df)
     pool.close()
     pool.join()
     return DATA
+
+
+def file_to_features(binary_file):
+    data = pd.read_csv(BytesIO(binary_file), sep=' ', header=None, names=['time', 'id', 'latitude', 'longitude', 'elevation', 'code', 'name'])
+    data['time'] = data['time'].apply(time_to_seconds)
+    grouped = data.groupby('id')
+    grouped_df = [i for i in grouped]
+    tmp = get_features(grouped_df)
+    features = np.array(tmp)
+    return (features, data['id'].unique())
+
 
 if __name__ == '__main__':
     for file in listdir('data'):
