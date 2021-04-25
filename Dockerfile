@@ -1,7 +1,9 @@
 FROM amd64/python:
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED=1
-WORKDIR /usr/src/avia
+COPY ./ /app
 
-COPY . .
+WORKDIR /app
+
+RUN pip install --upgrade pip
+
+RUN pip install -r requirements.txt
