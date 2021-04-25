@@ -1,4 +1,4 @@
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.7
+FROM amd64/python:
 
 COPY ./ /app
 
@@ -7,5 +7,3 @@ WORKDIR /app
 RUN pip install --upgrade pip
 
 RUN pip install -r requirements.txt
-
-#EXPOSE 8000
