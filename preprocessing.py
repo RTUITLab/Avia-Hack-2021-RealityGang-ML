@@ -3,7 +3,6 @@ from os.path import join, isfile
 from os import listdir
 import numpy as np
 import math
-from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Pool
 import time
 from io import BytesIO
@@ -15,21 +14,17 @@ def time_to_seconds(time: str) -> int:
     return s + m*60 + h*3600
 
 
-def calc_angle(x1, y1, x2, y2, x3, y3):
-    v1 = ((x2-x1), (y2-y1))
-    v2 = ((x3-x2), (y3-y2))
-    sqrt1, sqrt2 = np.sqrt([v1[0]**2+v1[1]**2, v2[0]**2+v2[1]**2])
-    cos = (v1[0]*v2[0] + v1[1]*v2[1]) / ((sqrt1 + 0.01) * (sqrt2 + 0.01))
+def calc_angle(v1, v2):
+    cos = (v1[0] * v2[0] + v1[1] * v2[1]) / ((v1[0]**2 + v1[1]**2 + 0.01) * (v2[0]**2 + v2[1]**2 + 0.01))
     return (cos + 1) / 2
 
 
-def calc_distance(x1, y1, x2, y2):
-    return math.sqrt((x2-x1)**2 + (y2-y1)**2)
+def calc_distance(v):
+    return math.sqrt(v[0]**2 + v[1]**2)
 
 
 def kernel(tupl):
     _, track_data = tupl
-    p_index = 0
     min_angle = 2
     max_z_speed = 0
     avg_z_speed = 0
@@ -37,22 +32,22 @@ def kernel(tupl):
     avg_xy_speed = 0
     max_time_diff = 0
     avg_time_diff = (track_data.iloc[track_data.shape[0] - 1]['time'] - track_data.iloc[0]['time']) / track_data.shape[0]
+    v_prev = (track_data.iloc[1]['latitude'] - track_data.iloc[0]['latitude'], track_data.iloc[1]['longitude'] - track_data.iloc[0]['longitude'])
+    v = ()
     for i in range(1, track_data.shape[0]):
         time_diff = track_data.iloc[i]['time'] - track_data.iloc[i - 1]['time']
-        if(time_diff == 0):
+        if time_diff == 0:
             time_diff = .001
         if time_diff > max_time_diff:
             max_time_diff = time_diff
         
         if i != track_data.shape[0] - 1:
-            angle = calc_angle(track_data.iloc[i - 1]['latitude'], track_data.iloc[i - 1]['longitude'], track_data.iloc[i]['latitude'],
-                               track_data.iloc[i]['longitude'], track_data.iloc[i + 1]['latitude'], track_data.iloc[i + 1]['longitude'])
+            v = (track_data.iloc[i + 1]['latitude'] - track_data.iloc[i]['latitude'], track_data.iloc[i + 1]['longitude'] - track_data.iloc[i]['longitude'])
+            angle = calc_angle(v_prev, v)
             if angle < min_angle:
                 min_angle = angle
-                p_index = i
         
-        xy_speed = calc_distance(track_data.iloc[i - 1]['latitude'], track_data.iloc[i - 1]['longitude'], 
-                                 track_data.iloc[i]['latitude'], track_data.iloc[i]['longitude']) / time_diff
+        xy_speed = calc_distance(v_prev) / time_diff
         if xy_speed > max_xy_speed:
             max_xy_speed = xy_speed
         avg_xy_speed += xy_speed
@@ -61,6 +56,8 @@ def kernel(tupl):
         if z_speed > max_z_speed:
             max_z_speed = z_speed
         avg_z_speed += z_speed
+        if i != track_data.shape[0] - 1:
+            v_prev = v
         
     avg_xy_speed /= track_data.shape[0]
     avg_z_speed /= track_data.shape[0]
@@ -83,3 +80,20 @@ def file_to_features(binary_file):
     tmp = get_features(grouped_df)
     features = np.array(tmp)
     return (features, list(grouped.groups.keys()))
+
+
+def testing(filename):
+    data = pd.read_csv(filename, sep=' ', header=None, names=['time', 'id', 'latitude', 'longitude', 'elevation', 'code', 'name'])
+    data['time'] = data['time'].apply(time_to_seconds)
+    grouped = data.groupby('id')
+    grouped_df = [i for i in grouped]
+    tmp = get_features(grouped_df)
+    features = np.array(tmp)
+    return features, list(grouped.groups.keys())
+
+
+if __name__ == "__main__":
+    for i in range(4):
+        t = time.time()
+        testing('data/BadTracksHackaton1801.txt')
+        print(time.time() - t)
